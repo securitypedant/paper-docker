@@ -1,3 +1,9 @@
+# Updated version of paperspigot-docker
+Forked from...
+
+https://docker-py.readthedocs.io/en/stable/index.html
+
+
 # paperspigot-docker
 Easy to use and clean Docker image for running Paper Spigot servers in Docker containers using OpenJDK. 
 

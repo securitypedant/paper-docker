@@ -6,17 +6,18 @@ ARG JAVA_VERSION=16
 ################################
 FROM openjdk:${JAVA_VERSION}-alpine AS build
 
-#####################################
-### Maintained by Felix Klauke    ###
-### Contact: info@felix-klauke.de ###
-#####################################
-LABEL maintainer="Felix Klauke <info@felix-klauke.de>"
+#########################################
+### Maintained by Simon Thorpe        ###
+### Contact: simon@securitypedant.com ###
+#########################################
+LABEL maintainer="Simon Thorpe <simon@securitypedant.com>"
 
 #################
 ### Arguments ###
 #################
-ARG PAPER_VERSION=1.17
-ARG PAPER_DOWNLOAD_URL=https://papermc.io/api/v1/paper/${PAPER_VERSION}/latest/download
+
+# Use the get-paper-version.py to get the right URL for the version you need.
+ARG PAPER_DOWNLOAD_URL=https://api.papermc.io/v2/projects/paper/versions/1.20/builds/3/downloads/paper-1.20-3.jar
 ARG MINECRAFT_BUILD_USER=minecraft-build
 ENV MINECRAFT_BUILD_PATH=/opt/minecraft
 
