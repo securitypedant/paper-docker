@@ -1,10 +1,10 @@
 # Java Version
-ARG JAVA_VERSION=16
+ARG JAVA_VERSION=17
 
 ################################
 ### We use a java base image ###
 ################################
-FROM openjdk:${JAVA_VERSION}-alpine AS build
+FROM amazoncorretto:${JAVA_VERSION}-alpine AS build
 
 #########################################
 ### Maintained by Simon Thorpe        ###
@@ -45,28 +45,28 @@ USER ${MINECRAFT_BUILD_USER}
 RUN java -jar ${MINECRAFT_BUILD_PATH}/paper.jar; exit 0
 
 # Copy built jar
-RUN mv ${MINECRAFT_BUILD_PATH}/cache/patched*.jar ${MINECRAFT_BUILD_PATH}/paper.jar
+RUN mv ${MINECRAFT_BUILD_PATH}/cache/*.jar ${MINECRAFT_BUILD_PATH}/paper.jar
 
 ###########################
 ### Running environment ###
 ###########################
-FROM openjdk:${JAVA_VERSION}-alpine AS runtime
+FROM amazoncorretto:${JAVA_VERSION}-alpine AS runtime
 
 ##########################
 ### Environment & ARGS ###
 ##########################
-ENV MINECRAFT_PATH=/opt/minecraft
+ENV MINECRAFT_PATH=/opt/minecraft/
 ENV SERVER_PATH=${MINECRAFT_PATH}/server
-ENV DATA_PATH=${MINECRAFT_PATH}/data
-ENV LOGS_PATH=${MINECRAFT_PATH}/logs
-ENV CONFIG_PATH=${MINECRAFT_PATH}/config
-ENV WORLDS_PATH=${MINECRAFT_PATH}/worlds
-ENV PLUGINS_PATH=${MINECRAFT_PATH}/plugins
-ENV PROPERTIES_LOCATION=${CONFIG_PATH}/server.properties
+ENV DATA_PATH=${SERVER_PATH}/data
+ENV LOGS_PATH=${SERVER_PATH}/logs
+ENV CONFIG_PATH=${SERVER_PATH}/config
+ENV WORLD_PATH=${SERVER_PATH}/world
+ENV WORLD_NETHER_PATH=${SERVER_PATH}/world_nether
+ENV WORLD_THEEND_PATH=${SERVER_PATH}/world_the_end
+ENV PLUGINS_PATH=${SERVER_PATH}/plugins
+ENV PROPERTIES_LOCATION=${SERVER_PATH}/server.properties
 ENV JAVA_HEAP_SIZE=4G
-ENV JAVA_ARGS="-server -Dcom.mojang.eula.agree=true"
-ENV SPIGOT_ARGS="--nojline"
-ENV PAPER_ARGS=""
+ENV JAVA_ARGS="-server"
 
 #################
 ### Libraries ###
@@ -96,12 +96,14 @@ COPY --from=build /opt/minecraft/paper.jar ${SERVER_PATH}/
 ADD scripts/docker-entrypoint.sh docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh
 
+ADD scripts/eula.txt eula.txt
+
 ############
 ### User ###
 ############
 RUN addgroup minecraft && \
     adduser -s /bin/bash minecraft -G minecraft -h ${MINECRAFT_PATH} -D && \
-    mkdir ${LOGS_PATH} ${DATA_PATH} ${WORLDS_PATH} ${PLUGINS_PATH} ${CONFIG_PATH} && \
+    mkdir ${LOGS_PATH} ${DATA_PATH} ${WORLD_PATH} ${WORLD_NETHER_PATH} ${WORLD_THEEND_PATH} ${PLUGINS_PATH} ${CONFIG_PATH} && \
     chown -R minecraft:minecraft ${MINECRAFT_PATH}
 
 USER minecraft
@@ -110,22 +112,24 @@ USER minecraft
 ### Setup environment ###
 #########################
 # Create symlink for plugin volume as hotfix for some plugins who hard code their directories
-RUN ln -s $PLUGINS_PATH $SERVER_PATH/plugins && \
+#RUN ln -s $PLUGINS_PATH $SERVER_PATH/plugins && \
     # Create symlink for persistent data
-    ln -s $DATA_PATH/banned-ips.json $SERVER_PATH/banned-ips.json && \
-    ln -s $DATA_PATH/banned-players.json $SERVER_PATH/banned-players.json && \
-    ln -s $DATA_PATH/help.yml $SERVER_PATH/help.yml && \
-    ln -s $DATA_PATH/ops.json $SERVER_PATH/ops.json && \
-    ln -s $DATA_PATH/permissions.yml $SERVER_PATH/permissions.yml && \
-    ln -s $DATA_PATH/whitelist.json $SERVER_PATH/whitelist.json && \
+#    ln -s $DATA_PATH/banned-ips.json $SERVER_PATH/banned-ips.json && \
+#    ln -s $DATA_PATH/banned-players.json $SERVER_PATH/banned-players.json && \
+#    ln -s $DATA_PATH/help.yml $SERVER_PATH/help.yml && \
+#    ln -s $DATA_PATH/ops.json $SERVER_PATH/ops.json && \
+#    ln -s $DATA_PATH/permissions.yml $SERVER_PATH/permissions.yml && \
+#    ln -s $DATA_PATH/whitelist.json $SERVER_PATH/whitelist.json && \
     # Create symlink for logs
-    ln -s $LOGS_PATH $SERVER_PATH/logs
+#    ln -s $LOGS_PATH $SERVER_PATH/logs
 
 ###############
 ### Volumes ###
 ###############
 VOLUME "${CONFIG_PATH}"
-VOLUME "${WORLDS_PATH}"
+VOLUME "${WORLD_PATH}"
+VOLUME "${WORLD_NETHER_PATH}"
+VOLUME "${WORLD_THEEND_PATH}"
 VOLUME "${PLUGINS_PATH}"
 VOLUME "${DATA_PATH}"
 VOLUME "${LOGS_PATH}"
