@@ -3,6 +3,8 @@ Forked from...
 
 https://docker-py.readthedocs.io/en/stable/index.html
 
+# To build
+docker build -t mc-base --no-cache=true .
 
 # paperspigot-docker
 Easy to use and clean Docker image for running Paper Spigot servers in Docker containers using OpenJDK. 

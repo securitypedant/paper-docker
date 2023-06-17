@@ -4,7 +4,7 @@ ARG JAVA_VERSION=17
 ################################
 ### We use a java base image ###
 ################################
-FROM amazoncorretto:${JAVA_VERSION}-alpine AS build
+FROM amazoncorretto:${JAVA_VERSION}-alpine AS runtime
 
 #########################################
 ### Maintained by Simon Thorpe        ###
@@ -12,65 +12,25 @@ FROM amazoncorretto:${JAVA_VERSION}-alpine AS build
 #########################################
 LABEL maintainer="Simon Thorpe <simon@securitypedant.com>"
 
-#################
-### Arguments ###
-#################
-
-# Use the get-paper-version.py to get the right URL for the version you need.
-ARG PAPER_DOWNLOAD_URL=https://api.papermc.io/v2/projects/paper/versions/1.20/builds/3/downloads/paper-1.20-3.jar
-ARG MINECRAFT_BUILD_USER=minecraft-build
-ENV MINECRAFT_BUILD_PATH=/opt/minecraft
-
-#########################
-### Working directory ###
-#########################
-WORKDIR ${MINECRAFT_BUILD_PATH}
-
-##########################
-### Download paperclip ###
-##########################
-ADD ${PAPER_DOWNLOAD_URL} paper.jar
-
-############
-### User ###
-############
-RUN adduser -s /bin/bash ${MINECRAFT_BUILD_USER} -D && \
-    chown ${MINECRAFT_BUILD_USER} ${MINECRAFT_BUILD_PATH} -R
-
-USER ${MINECRAFT_BUILD_USER}
-
-############################################
-### Run paperclip and obtain patched jar ###
-############################################
-RUN java -jar ${MINECRAFT_BUILD_PATH}/paper.jar; exit 0
-
-# Copy built jar
-RUN mv ${MINECRAFT_BUILD_PATH}/cache/*.jar ${MINECRAFT_BUILD_PATH}/paper.jar
-
-###########################
-### Running environment ###
-###########################
-FROM amazoncorretto:${JAVA_VERSION}-alpine AS runtime
-
 ##########################
 ### Environment & ARGS ###
 ##########################
-ENV MINECRAFT_PATH=/opt/minecraft/
+ENV MINECRAFT_PATH=/opt/minecraft
 ENV SERVER_PATH=${MINECRAFT_PATH}/server
-ENV DATA_PATH=${SERVER_PATH}/data
-ENV LOGS_PATH=${SERVER_PATH}/logs
-ENV CONFIG_PATH=${SERVER_PATH}/config
-ENV WORLD_PATH=${SERVER_PATH}/world
-ENV WORLD_NETHER_PATH=${SERVER_PATH}/world_nether
-ENV WORLD_THEEND_PATH=${SERVER_PATH}/world_the_end
-ENV PLUGINS_PATH=${SERVER_PATH}/plugins
+ENV WORLDS_PATH=${MINECRAFT_PATH}/worlds
+ENV PLUGINS_PATH=${MINECRAFT_PATH}/plugins
+ENV LOGS_PATH=${MINECRAFT_PATH}/logs
+ENV CONFIG_PATH=${MINECRAFT_PATH}/config
+ENV DATA_PATH=${MINECRAFT_PATH}/data
 ENV PROPERTIES_LOCATION=${SERVER_PATH}/server.properties
-ENV JAVA_HEAP_SIZE=4G
-ENV JAVA_ARGS="-server"
+
+ENV JAVA_HEAP_SIZE=3G
 
 #################
 ### Libraries ###
 #################
+RUN apk add sudo 
+RUN apk add nano
 RUN apk add py3-pip
 RUN pip3 install mcstatus
 
@@ -80,15 +40,31 @@ RUN pip3 install mcstatus
 HEALTHCHECK --interval=10s --timeout=5s --start-period=120s \
     CMD mcstatus localhost:$( cat $PROPERTIES_LOCATION | grep "server-port" | cut -d'=' -f2 ) ping
 
-#########################
-### Working directory ###
-#########################
+###########################
+### Directory structure ###
+###########################
+
+RUN mkdir ${MINECRAFT_PATH}
+RUN mkdir ${SERVER_PATH}
+RUN mkdir ${MINECRAFT_PATH}/worlds
+RUN mkdir ${MINECRAFT_PATH}/plugins
+RUN mkdir ${MINECRAFT_PATH}/logs
+RUN mkdir ${MINECRAFT_PATH}/config
+RUN mkdir ${MINECRAFT_PATH}/data
+
 WORKDIR ${SERVER_PATH}
 
-###########################################
-### Obtain runable jar from build stage ###
-###########################################
-COPY --from=build /opt/minecraft/paper.jar ${SERVER_PATH}/
+#################
+### Arguments ###
+#################
+
+# Use the get-paper-version.py to get the right URL for the version you need.
+ARG PAPER_DOWNLOAD_URL=https://api.papermc.io/v2/projects/paper/versions/1.20/builds/17/downloads/paper-1.20-17.jar
+
+##########################
+### Download paperclip ###
+##########################
+ADD ${PAPER_DOWNLOAD_URL} paper.jar
 
 ######################
 ### Obtain scripts ###
@@ -103,7 +79,6 @@ ADD scripts/eula.txt eula.txt
 ############
 RUN addgroup minecraft && \
     adduser -s /bin/bash minecraft -G minecraft -h ${MINECRAFT_PATH} -D && \
-    mkdir ${LOGS_PATH} ${DATA_PATH} ${WORLD_PATH} ${WORLD_NETHER_PATH} ${WORLD_THEEND_PATH} ${PLUGINS_PATH} ${CONFIG_PATH} && \
     chown -R minecraft:minecraft ${MINECRAFT_PATH}
 
 USER minecraft
@@ -112,32 +87,36 @@ USER minecraft
 ### Setup environment ###
 #########################
 # Create symlink for plugin volume as hotfix for some plugins who hard code their directories
-#RUN ln -s $PLUGINS_PATH $SERVER_PATH/plugins && \
+RUN ln -s $PLUGINS_PATH $SERVER_PATH/plugins && \
     # Create symlink for persistent data
-#    ln -s $DATA_PATH/banned-ips.json $SERVER_PATH/banned-ips.json && \
-#    ln -s $DATA_PATH/banned-players.json $SERVER_PATH/banned-players.json && \
-#    ln -s $DATA_PATH/help.yml $SERVER_PATH/help.yml && \
-#    ln -s $DATA_PATH/ops.json $SERVER_PATH/ops.json && \
-#    ln -s $DATA_PATH/permissions.yml $SERVER_PATH/permissions.yml && \
-#    ln -s $DATA_PATH/whitelist.json $SERVER_PATH/whitelist.json && \
+    ln -s $DATA_PATH/banned-ips.json $SERVER_PATH/banned-ips.json && \
+    ln -s $DATA_PATH/banned-players.json $SERVER_PATH/banned-players.json && \
+    ln -s $DATA_PATH/help.yml $SERVER_PATH/help.yml && \
+    ln -s $DATA_PATH/ops.json $SERVER_PATH/ops.json && \
+    ln -s $DATA_PATH/permissions.yml $SERVER_PATH/permissions.yml && \
+    ln -s $DATA_PATH/whitelist.json $SERVER_PATH/whitelist.json && \
     # Create symlink for logs
-#    ln -s $LOGS_PATH $SERVER_PATH/logs
+    ln -s $LOGS_PATH $SERVER_PATH/logs && \
+    # Create symlink for config
+    ln -s $CONFIG_PATH $SERVER_PATH/config && \
+    # Move the server.properties to config folder
+    ln -s $CONFIG_PATH/server.properties $SERVER_PATH/server.properties
 
 ###############
 ### Volumes ###
 ###############
 VOLUME "${CONFIG_PATH}"
-VOLUME "${WORLD_PATH}"
-VOLUME "${WORLD_NETHER_PATH}"
-VOLUME "${WORLD_THEEND_PATH}"
+VOLUME "${WORLDS_PATH}"
 VOLUME "${PLUGINS_PATH}"
 VOLUME "${DATA_PATH}"
 VOLUME "${LOGS_PATH}"
 
-#############################
-### Expose minecraft port ###
-#############################
+###############################
+### Expose minecraft ports  ###
+###############################
 EXPOSE 25565
+# Geyser port for bedrock devices        
+EXPOSE 19132
 
 ######################################
 ### Entrypoint is the start script ###
