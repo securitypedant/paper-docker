@@ -1,29 +1,28 @@
-version: '3.7'
-
 services:
-  minecraft:
-    image: felixklauke/paperspigot:1.16.3
-    container_name: minecraft
-    stdin_open: true
-    tty: true
-    restart: always
-    networks:
-      - minecraft
-    ports:
-      - 25565:25565
-    volumes:
-      - minecraft-config:/opt/minecraft/config
-      - minecraft-worlds:/opt/minecraft/worlds
-      - minecraft-plugins:/opt/minecraft/plugins
-      - minecraft-data:/opt/minecraft/data
-      - minecraft-logs:/opt/minecraft/logs
+    nick-bestsmp:
+        image: simonsecuritypedant/paperserver:1.20
+        tty: true
+#        command: sh
+        container_name: minecraft
+        networks:
+          - minecraft
+        restart: always
+        ports:
+            - 25565:25565
+            - 19132:19132/udp
+        volumes:
+          - config:/opt/minecraft/config
+          - data:/opt/minecraft/data
+          - worlds:/opt/minecraft/worlds
+          - logs:/opt/minecraft/logs
+          - plugins:/opt/minecraft/plugins
 
 volumes:
-  minecraft-config: {}
-  minecraft-worlds: {}
-  minecraft-plugins: {}
-  minecraft-data: {}
-  minecraft-logs: {}
+  config: {}
+  worlds: {}
+  plugins: {}
+  data: {}
+  logs: {}
 
 networks:
   minecraft: {}

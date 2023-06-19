@@ -26,9 +26,9 @@ ENV PROPERTIES_LOCATION=${SERVER_PATH}/server.properties
 
 ENV JAVA_HEAP_SIZE=3G
 
-#################
-### Libraries ###
-#################
+###########################
+### Libraries and tools ###
+###########################
 RUN apk add sudo 
 RUN apk add nano
 RUN apk add py3-pip
@@ -54,16 +54,11 @@ RUN mkdir ${MINECRAFT_PATH}/data
 
 WORKDIR ${SERVER_PATH}
 
-#################
-### Arguments ###
-#################
-
-# Use the get-paper-version.py to get the right URL for the version you need.
-ARG PAPER_DOWNLOAD_URL=https://api.papermc.io/v2/projects/paper/versions/1.20/builds/17/downloads/paper-1.20-17.jar
-
 ##########################
 ### Download paperclip ###
 ##########################
+# Use get-paper-version.py to get the right URL for the version you need.
+ARG PAPER_DOWNLOAD_URL=https://api.papermc.io/v2/projects/paper/versions/1.20/builds/17/downloads/paper-1.20-17.jar
 ADD ${PAPER_DOWNLOAD_URL} paper.jar
 
 ######################
@@ -115,7 +110,7 @@ VOLUME "${LOGS_PATH}"
 ### Expose minecraft ports  ###
 ###############################
 EXPOSE 25565
-# Geyser port for bedrock devices        
+# Geyser port for bedrock devices      
 EXPOSE 19132
 
 ######################################

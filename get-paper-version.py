@@ -7,7 +7,10 @@
 # VERSION = x.xx.x
 # BUILD = The build number or the string 'latest'
 #
-# Example URL is https://api.papermc.io/v2/projects/paper/versions/1.20/builds/3/downloads/paper-1.20-3.jar
+# e.g.
+#         python get-paper-version.py paper 1.20 latest
+#
+# Example output URL is https://api.papermc.io/v2/projects/paper/versions/1.20/builds/3/downloads/paper-1.20-3.jar
 
 import requests, sys
 

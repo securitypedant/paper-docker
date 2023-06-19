@@ -1,13 +1,19 @@
 # Updated version of paperspigot-docker
 Forked from...
 
-https://docker-py.readthedocs.io/en/stable/index.html
+https://github.com/felixklauke/paper-docker
 
 # To build
-docker build -t mc-base --no-cache=true .
+- docker build -t paperserver --no-cache=true .
+
+and to build with multiplatform...
+
+- docker buildx build --platform linux/amd64,linux/arm64 --push -t simonsecuritypedant/paperserver:1.20 .
 
 # paperspigot-docker
-Easy to use and clean Docker image for running Paper Spigot servers in Docker containers using OpenJDK. 
+Easy to use and clean Docker image for running Paper Spigot servers in Docker containers using the Amazon supported OpenJDK (https://hub.docker.com/_/amazoncorretto/)
+
+Note in some places you will see reference to the UDP port 19132, this is for when i've built the server with Geyser and floodgate.
 
 You may also be interested in [waterfall-docker](https://github.com/FelixKlauke/waterfall-docker) and [velocity-docker](https://github.com/FelixKlauke/velocity-docker) if you want to build a whole server network.
 
@@ -21,37 +27,14 @@ docker run -it \
     -v ~/minecraft/plugins:/opt/minecraft/plugins \
     -v ~/minecraft/data:/opt/minecraft/data \
     -v ~/minecraft/logs:/opt/minecraft/logs \
-    felixklauke/paperspigot:1.16.5
+    simonsecuritypedant/paperserver:1.20
 ```
 
 # Tags and Versions
 The Docker images are tagged for their Minecraft versions. These versions are currently available:
-- `felixklauke/paperspigot:1.16.5`
-- `felixklauke/paperspigot:1.16.4`
-- `felixklauke/paperspigot:1.16.3`
-- `felixklauke/paperspigot:1.16.2`
-- `felixklauke/paperspigot:1.16.1` 
-- `felixklauke/paperspigot:1.15.2` 
-- `felixklauke/paperspigot:1.15.1` 
-- `felixklauke/paperspigot:1.15` 
-- `felixklauke/paperspigot:1.14.4` 
-- `felixklauke/paperspigot:1.14.3` 
-- `felixklauke/paperspigot:1.14.2` 
-- `felixklauke/paperspigot:1.14.1` 
-- `felixklauke/paperspigot:1.14`
-- `felixklauke/paperspigot:1.13.2` 
-- `felixklauke/paperspigot:1.13.1`
-- `felixklauke/paperspigot:1.13`
-- `felixklauke/paperspigot:1.12.2`
-- `felixklauke/paperspigot:1.12.1`
-- `felixklauke/paperspigot:1.12`
-- `felixklauke/paperspigot:1.11.2`
-- `felixklauke/paperspigot:1.10.2`
-- `felixklauke/paperspigot:1.9.4`
-- `felixklauke/paperspigot:1.8.8`
+- `simonsecuritypedant/paperserver:1.20`
 
-The specific images are updated by hand. The 1.x-latest images will update at nightly builds and will always
-use the latest build.
+The specific images are updated by hand. 
 
 # Volumes
 There are five volumes which are used for:
@@ -69,11 +52,10 @@ This method is recommended if you have an already existing server which you wish
 the way bind mounts behave.](https://docs.docker.com/storage/bind-mounts/#mount-into-a-non-empty-directory-on-the-container)
 You can add this simple entry to your docker-compose.yml when using bind mounts:
 ```yaml
-version: '3.7'
 
 services:
   minecraft:
-    image: felixklauke/paperspigot:1.16.5
+    image: simonsecuritypedant/paperserver:1.20
     container_name: minecraft
     stdin_open: true
     tty: true
@@ -97,11 +79,10 @@ networks:
 ## Volumes
 If you want to use explicit volumes, you can use this:
 ```yaml 
-version: '3.7'
 
 services:
   minecraft:
-    image: felixklauke/paperspigot:1.16.5
+    image: simonsecuritypedant/paperserver:1.20
     container_name: minecraft
     stdin_open: true
     tty: true
